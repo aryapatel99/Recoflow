@@ -1,0 +1,62 @@
+dataset:
+  name: "Amazon Reviews 2023"
+  domain: "Electronics"
+  provider: "McAuley Lab"
+
+source:
+  official: "https://amazon-reviews-2023.github.io/"
+  huggingface: "https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023"
+
+working_subset:
+  status: "pending_inspection"
+  target_users: 50000
+  target_products: 10000
+  target_interactions: 250000
+  minimum_interactions_per_user: 5
+  minimum_interactions_per_product: 5
+
+benchmark:
+  preferred_config: "5core_timestamp_Electronics"
+  reason: "Supports chronological recommendation evaluation."
+
+raw_data:
+  reviews:
+    expected_file: "Electronics.jsonl.gz"
+
+  metadata:
+    expected_file: "meta_Electronics.jsonl.gz"
+
+processed_data:
+  interactions: "data/processed/interactions.parquet"
+  products: "data/processed/products.parquet"
+  users: "data/processed/users.parquet"
+
+interaction_fields:
+  - user_id
+  - parent_asin
+  - asin
+  - rating
+  - timestamp
+  - verified_purchase
+
+product_fields:
+  - parent_asin
+  - title
+  - description
+  - features
+  - price
+  - images
+  - categories
+  - details
+  - store
+
+policy:
+  raw_data_gitignored: true
+  large_processed_files_gitignored: true
+  dataset_license_review_required: true
+
+notes:
+  - "Do not download the complete raw Electronics dataset without need."
+  - "Exact working subset must be finalized after inspection."
+  - "Product image availability must be measured."
+  - "Historical reviews are not treated as a complete clickstream."
