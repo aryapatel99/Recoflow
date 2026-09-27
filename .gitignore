@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Python tools
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Dataset files
+data/raw/*
+data/processed/*
+data/external/*
+
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+
+# ML artifacts
+*.pkl
+*.pickle
+*.joblib
+*.onnx
+*.pt
+*.pth
+*.bin
+models/
+
+# Temporary files
+tmp/
+temp/
+
+# Build files
+build/
+dist/
+*.egg-info/
+
+# Node
+node_modules/
+
+# Streamlit
+.streamlit/secrets.toml
