@@ -6,6 +6,8 @@ alembic
 pydantic
 pydantic-settings
 python-dotenv
-passlib[bcrypt]
+bcrypt
 python-jose[cryptography]
 email-validator
+httpx
+pytest
