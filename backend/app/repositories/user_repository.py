@@ -1,6 +1,4 @@
 from datetime import datetime
-from uuid import UUID
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -12,53 +10,48 @@ class UserRepository:
     @staticmethod
     def get_by_id(
         db: Session,
-        user_id: UUID,
+        user_id: int,
     ) -> User | None:
-        return db.scalar(
-            select(User).where(User.id == user_id)
-        )
+        return db.get(User, user_id)
 
     @staticmethod
     def get_by_email(
         db: Session,
         email: str,
     ) -> User | None:
-        return db.scalar(
-            select(User).where(
-                User.email == email.lower().strip()
-            )
-        )
+        statement = select(User).where(User.email == email)
+        return db.execute(statement).scalar_one_or_none()
 
     @staticmethod
     def get_by_verification_token_hash(
         db: Session,
         token_hash: str,
     ) -> User | None:
-        return db.scalar(
-            select(User).where(
-                User.email_verification_token_hash == token_hash
-            )
+        statement = select(User).where(
+            User.email_verification_token_hash == token_hash
         )
+        return db.execute(statement).scalar_one_or_none()
 
     @staticmethod
     def create(
         db: Session,
         *,
         email: str,
-        full_name: str,
+        first_name: str | None,
+        last_name: str | None,
         password_hash: str,
         verification_token_hash: str,
         verification_expires_at: datetime,
     ) -> User:
-
         user = User(
-            email=email.lower().strip(),
-            full_name=full_name.strip(),
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
             password_hash=password_hash,
-            email_verified=False,
+            is_email_verified=False,
+            is_active=True,
             email_verification_token_hash=verification_token_hash,
             email_verification_expires_at=verification_expires_at,
-            is_active=True,
         )
 
         db.add(user)
@@ -72,8 +65,7 @@ class UserRepository:
         db: Session,
         user: User,
     ) -> User:
-
-        user.email_verified = True
+        user.is_email_verified = True
         user.email_verification_token_hash = None
         user.email_verification_expires_at = None
 

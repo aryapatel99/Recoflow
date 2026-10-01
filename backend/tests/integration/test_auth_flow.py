@@ -20,9 +20,9 @@ def test_health_endpoint():
 
 def test_register_login_requires_email_verification():
     email = (
-        f"test_{uuid.uuid4().hex[:12]}"
-        "@recoflow.local"
-    )
+    f"test_{uuid.uuid4().hex[:12]}"
+    "@example.com"
+)
 
     response = client.post(
         "/auth/register",

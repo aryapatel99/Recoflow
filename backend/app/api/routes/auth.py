@@ -1,10 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
-from backend.app.api.dependencies import (
-    get_current_user,
-    get_db,
-)
+from backend.app.api.dependencies import get_current_user, get_db
 from backend.app.schemas.auth import (
     LoginRequest,
     RegisterRequest,
@@ -33,24 +30,17 @@ def register(
 ):
     user, verification_token = AuthService.register(
         db,
-        data,
+        email=data.email,
+        full_name=data.full_name,
+        password=data.password,
     )
 
     return RegisterResponse(
-        user_id=user.id,
-        email=user.email,
-        full_name=user.full_name,
-        email_verified=user.email_verified,
-        message=(
-            "Registration successful. "
-            "Verify your email before logging in."
-        ),
-        verification_token=(
-            verification_token
-            if user.email_verified is False
-            else None
-        ),
-    )
+    message="Registration successful. Verify your email before logging in.",
+    email=user.email,
+    email_verified=user.is_email_verified,
+    verification_token=verification_token,
+)
 
 
 @router.get(
@@ -58,22 +48,17 @@ def register(
     response_model=VerifyEmailResponse,
 )
 def verify_email(
-    token: str = Query(
-        min_length=20,
-        max_length=200,
-    ),
+    token: str = Query(...),
     db: Session = Depends(get_db),
 ):
     user = AuthService.verify_email(
         db,
-        token,
+        token=token,
     )
 
     return VerifyEmailResponse(
-        user_id=user.id,
+        message="Email verified successfully.",
         email=user.email,
-        email_verified=user.email_verified,
-        message="Email address verified successfully.",
     )
 
 
@@ -87,15 +72,13 @@ def login(
 ):
     access_token = AuthService.login(
         db,
-        data,
+        email=data.email,
+        password=data.password,
     )
-
-    from backend.app.core.config import settings
 
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        expires_in=settings.access_token_expire_minutes * 60,
     )
 
 

@@ -1,23 +1,17 @@
-from datetime import datetime
-from uuid import UUID
-
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class RegisterRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=72)
-    full_name: str = Field(min_length=2, max_length=120)
+    full_name: str = Field(min_length=1, max_length=200)
 
 
 class RegisterResponse(BaseModel):
-    user_id: UUID
-    email: EmailStr
-    full_name: str
-    email_verified: bool
     message: str
-    verification_token: str | None = None
-
+    email: EmailStr
+    email_verified: bool
+    verification_token: str
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -27,22 +21,19 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    expires_in: int
 
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID
+    id: int
     email: EmailStr
-    full_name: str
-    email_verified: bool
+    first_name: str | None
+    last_name: str | None
+    is_email_verified: bool
     is_active: bool
-    created_at: datetime
 
 
 class VerifyEmailResponse(BaseModel):
-    user_id: UUID
-    email: EmailStr
-    email_verified: bool
     message: str
+    email: EmailStr

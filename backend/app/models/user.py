@@ -1,8 +1,6 @@
 from datetime import datetime
-from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, String, func
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy import Boolean, DateTime, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
@@ -11,10 +9,10 @@ from backend.app.db.base import Base
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True),
+    id: Mapped[int] = mapped_column(
+        Integer,
         primary_key=True,
-        default=uuid4,
+        autoincrement=True,
     )
 
     email: Mapped[str] = mapped_column(
@@ -24,9 +22,14 @@ class User(Base):
         index=True,
     )
 
-    full_name: Mapped[str] = mapped_column(
-        String(120),
-        nullable=False,
+    first_name: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    last_name: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
     )
 
     password_hash: Mapped[str] = mapped_column(
@@ -34,22 +37,10 @@ class User(Base):
         nullable=False,
     )
 
-    email_verified: Mapped[bool] = mapped_column(
+    is_email_verified: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
         default=False,
-        server_default="false",
-    )
-
-    email_verification_token_hash: Mapped[str | None] = mapped_column(
-        String(64),
-        nullable=True,
-        unique=True,
-    )
-
-    email_verification_expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
     )
 
     is_active: Mapped[bool] = mapped_column(
@@ -72,6 +63,17 @@ class User(Base):
         onupdate=func.now(),
     )
 
+    email_verification_token_hash: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        unique=True,
+    )
+
+    email_verification_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
     events = relationship(
         "UserEvent",
         back_populates="user",
@@ -84,14 +86,21 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
-    wishlists = relationship(
+    wishlist = relationship(
         "Wishlist",
         back_populates="user",
         cascade="all, delete-orphan",
+        uselist=False,
     )
 
     orders = relationship(
         "Order",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    recommendations = relationship(
+        "Recommendation",
         back_populates="user",
         cascade="all, delete-orphan",
     )

@@ -1,22 +1,18 @@
-from datetime import datetime, timezone
-from uuid import UUID
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.app.core.security import (
     create_access_token,
+    decode_access_token,
     generate_verification_token,
     hash_password,
     hash_verification_token,
     verify_password,
-    verification_token_expiry,
 )
+from backend.app.models.user import User
 from backend.app.repositories.user_repository import UserRepository
-from backend.app.schemas.auth import (
-    LoginRequest,
-    RegisterRequest,
-)
 
 
 class AuthService:
@@ -24,9 +20,11 @@ class AuthService:
     @staticmethod
     def register(
         db: Session,
-        data: RegisterRequest,
-    ):
-        email = str(data.email).lower().strip()
+        *,
+        email: str,
+        full_name: str,
+        password: str,
+    ) -> tuple[User, str]:
 
         existing_user = UserRepository.get_by_email(
             db,
@@ -39,22 +37,28 @@ class AuthService:
                 detail="An account with this email already exists.",
             )
 
-        password_hash = hash_password(data.password)
+        name_parts = full_name.strip().split(maxsplit=1)
+
+        first_name = name_parts[0]
+        last_name = name_parts[1] if len(name_parts) > 1 else None
+
+        password_hash = hash_password(password)
 
         verification_token = generate_verification_token()
-
         verification_token_hash = hash_verification_token(
             verification_token
         )
 
-        verification_expires_at = verification_token_expiry(
-            hours=24
+        verification_expires_at = (
+            datetime.now(timezone.utc)
+            + timedelta(hours=24)
         )
 
         user = UserRepository.create(
             db,
             email=email,
-            full_name=data.full_name,
+            first_name=first_name,
+            last_name=last_name,
             password_hash=password_hash,
             verification_token_hash=verification_token_hash,
             verification_expires_at=verification_expires_at,
@@ -65,8 +69,10 @@ class AuthService:
     @staticmethod
     def verify_email(
         db: Session,
+        *,
         token: str,
-    ):
+    ) -> User:
+
         token_hash = hash_verification_token(token)
 
         user = UserRepository.get_by_verification_token_hash(
@@ -80,18 +86,20 @@ class AuthService:
                 detail="Invalid email verification token.",
             )
 
-        if user.email_verified:
-            return user
-
-        if (
-            not user.email_verification_expires_at
-            or user.email_verification_expires_at
-            < datetime.now(timezone.utc)
-        ):
+        if not user.email_verification_expires_at:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email verification token has expired.",
             )
+
+        if user.email_verification_expires_at < datetime.now(timezone.utc):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email verification token has expired.",
+            )
+
+        if user.is_email_verified:
+            return user
 
         return UserRepository.mark_email_verified(
             db,
@@ -101,10 +109,10 @@ class AuthService:
     @staticmethod
     def login(
         db: Session,
-        data: LoginRequest,
+        *,
+        email: str,
+        password: str,
     ) -> str:
-
-        email = str(data.email).lower().strip()
 
         user = UserRepository.get_by_email(
             db,
@@ -118,7 +126,7 @@ class AuthService:
             )
 
         if not verify_password(
-            data.password,
+            password,
             user.password_hash,
         ):
             raise HTTPException(
@@ -132,38 +140,70 @@ class AuthService:
                 detail="User account is inactive.",
             )
 
-        if not user.email_verified:
+        if not user.is_email_verified:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Email address has not been verified.",
+                detail="Email address must be verified before login.",
             )
 
-        return create_access_token(
-            str(user.id)
+        access_token = create_access_token(
+            subject=str(user.id),
         )
+
+        return access_token
 
     @staticmethod
     def get_current_user(
         db: Session,
-        user_id: str,
-    ):
+        *,
+        token: str,
+    ) -> User:
+
         try:
-            parsed_user_id = UUID(user_id)
-        except ValueError:
+            payload = decode_access_token(token)
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authentication credentials.",
+                detail="Invalid or expired access token.",
+                headers={
+                    "WWW-Authenticate": "Bearer"
+                },
+            )
+
+        subject = payload.get("sub")
+
+        if not subject:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token.",
+                headers={
+                    "WWW-Authenticate": "Bearer"
+                },
+            )
+
+        try:
+            user_id = int(subject)
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token.",
+                headers={
+                    "WWW-Authenticate": "Bearer"
+                },
             )
 
         user = UserRepository.get_by_id(
             db,
-            parsed_user_id,
+            user_id,
         )
 
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User no longer exists.",
+                headers={
+                    "WWW-Authenticate": "Bearer"
+                },
             )
 
         if not user.is_active:

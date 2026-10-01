@@ -1,8 +1,14 @@
 from datetime import datetime
-from uuid import UUID, uuid4
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, func
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PGUUID
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    Integer,
+    JSON,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
@@ -11,10 +17,10 @@ from backend.app.db.base import Base
 class SessionModel(Base):
     __tablename__ = "sessions"
 
-    id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True),
+    id: Mapped[int] = mapped_column(
+        Integer,
         primary_key=True,
-        default=uuid4,
+        autoincrement=True,
     )
 
     session_id: Mapped[str] = mapped_column(
@@ -24,10 +30,12 @@ class SessionModel(Base):
         index=True,
     )
 
-    user_id: Mapped[UUID | None] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True,
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
         index=True,
     )
 
@@ -42,6 +50,12 @@ class SessionModel(Base):
         nullable=True,
     )
 
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
     user = relationship(
         "User",
     )
@@ -49,24 +63,40 @@ class SessionModel(Base):
     events = relationship(
         "UserEvent",
         back_populates="session",
-        primaryjoin="SessionModel.session_id == UserEvent.session_id",
-        foreign_keys="UserEvent.session_id",
     )
 
 
 class UserEvent(Base):
     __tablename__ = "user_events"
 
-    id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True),
+    id: Mapped[int] = mapped_column(
+        Integer,
         primary_key=True,
-        default=uuid4,
+        autoincrement=True,
     )
 
-    user_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="CASCADE"),
+    event_id: Mapped[str] = mapped_column(
+        String(100),
+        unique=True,
         nullable=False,
+        index=True,
+    )
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+
+    session_id: Mapped[str | None] = mapped_column(
+        ForeignKey(
+            "sessions.session_id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
         index=True,
     )
 
@@ -76,40 +106,32 @@ class UserEvent(Base):
         index=True,
     )
 
-    parent_asin: Mapped[str | None] = mapped_column(
-        String(50),
+    product_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "products.id",
+            ondelete="SET NULL",
+        ),
         nullable=True,
         index=True,
-    )
-
-    asin: Mapped[str | None] = mapped_column(
-        String(50),
-        nullable=True,
-        index=True,
-    )
-
-    session_id: Mapped[str | None] = mapped_column(
-        String(100),
-        ForeignKey("sessions.session_id"),
-        nullable=True,
-    )
-
-    search_query: Mapped[str | None] = mapped_column(
-        Text,
-        nullable=True,
-    )
-
-    event_metadata: Mapped[dict | None] = mapped_column(
-        "metadata",
-        JSONB,
-        nullable=True,
     )
 
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
+        index=True,
+    )
+
+    received_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
         server_default=func.now(),
         index=True,
+    )
+
+    event_metadata: Mapped[dict | None] = mapped_column(
+        "metadata",
+        JSON,
+        nullable=True,
     )
 
     user = relationship(
@@ -120,6 +142,9 @@ class UserEvent(Base):
     session = relationship(
         "SessionModel",
         back_populates="events",
-        primaryjoin="SessionModel.session_id == UserEvent.session_id",
         foreign_keys=[session_id],
+    )
+
+    product = relationship(
+        "Product",
     )
