@@ -6,6 +6,8 @@ from backend.app.api.routes.auth_test import router as auth_test_router
 from backend.app.api.routes.events import router as events_router
 from backend.app.api.routes.products import router as products_router
 from backend.app.core.config import settings
+from backend.app.api.routes.behaviors import router as behaviors_router
+from backend.app.api.routes.recommendations import router as recommendations_router
 
 
 app = FastAPI(
@@ -42,3 +44,5 @@ app.include_router(auth_router)
 app.include_router(auth_test_router)
 app.include_router(products_router)
 app.include_router(events_router)
+app.include_router(behaviors_router)
+app.include_router(recommendations_router)

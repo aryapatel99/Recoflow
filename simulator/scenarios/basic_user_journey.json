@@ -1,0 +1,32 @@
+{
+  "events": [
+    {
+      "event_type": "product_view",
+      "product_id": 1
+    },
+    {
+      "event_type": "product_click",
+      "product_id": 1
+    },
+    {
+      "event_type": "product_view",
+      "product_id": 2
+    },
+    {
+      "event_type": "add_to_cart",
+      "product_id": 2
+    },
+    {
+      "event_type": "wishlist_add",
+      "product_id": 3
+    },
+    {
+      "event_type": "product_view",
+      "product_id": 4
+    },
+    {
+      "event_type": "purchase",
+      "product_id": 2
+    }
+  ]
+}
