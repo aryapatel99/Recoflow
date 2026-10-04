@@ -5,9 +5,11 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     ForeignKey,
+    Index,
     Numeric,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -74,9 +76,7 @@ class Product(Base):
 
     external_id: Mapped[str] = mapped_column(
         String(100),
-        unique=True,
         nullable=False,
-        index=True,
     )
 
     title: Mapped[str] = mapped_column(
@@ -178,4 +178,15 @@ class Product(Base):
     recommendation_impressions = relationship(
         "RecommendationImpression",
         back_populates="product",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "external_id",
+            name="products_external_id_key",
+        ),
+        Index(
+            "ix_products_external_id",
+            "external_id",
+        ),
     )

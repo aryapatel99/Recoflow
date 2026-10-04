@@ -157,7 +157,21 @@ Before finalizing the working subset, we will measure:
 
 Current status:
 
-**Pending inspection**
+**Local catalog sample imported**
+
+For local catalog development, a bounded byte-range sample of the Electronics
+metadata file is stored outside Git at:
+
+`data/raw/meta_Electronics.sample.jsonl`
+
+The reproducible importer is:
+
+`scripts/import_products.py`
+
+It preserves existing products, imports up to 92 additional records, maps
+records to the existing catalog categories, and keeps source image URLs. The
+full metadata source remains the Amazon Reviews 2023 Electronics metadata file;
+the multi-gigabyte source is not downloaded for this local catalog step.
 
 The final working subset will be selected based on:
 

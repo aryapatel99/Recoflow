@@ -76,6 +76,7 @@ class EventService:
         self,
         payload: EventCreate,
         user_id: int,
+        commit: bool = True,
     ):
         existing = self.events.get_event_by_event_id(
             payload.event_id
@@ -132,7 +133,8 @@ class EventService:
                 event_data
             )
 
-            self.db.commit()
+            if commit:
+                self.db.commit()
             self.db.refresh(event)
 
             return event, True

@@ -3,12 +3,13 @@ from datetime import datetime
 from sqlalchemy import (
     DateTime,
     ForeignKey,
+    Index,
     Integer,
-    JSON,
     String,
-    Text,
+    UniqueConstraint,
     func,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
@@ -25,9 +26,7 @@ class SessionModel(Base):
 
     session_id: Mapped[str] = mapped_column(
         String(100),
-        unique=True,
         nullable=False,
-        index=True,
     )
 
     user_id: Mapped[int] = mapped_column(
@@ -65,6 +64,17 @@ class SessionModel(Base):
         back_populates="session",
     )
 
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id",
+            name="sessions_session_id_key",
+        ),
+        Index(
+            "ix_sessions_session_id",
+            "session_id",
+        ),
+    )
+
 
 class UserEvent(Base):
     __tablename__ = "user_events"
@@ -77,9 +87,7 @@ class UserEvent(Base):
 
     event_id: Mapped[str] = mapped_column(
         String(100),
-        unique=True,
         nullable=False,
-        index=True,
     )
 
     user_id: Mapped[int] = mapped_column(
@@ -125,12 +133,11 @@ class UserEvent(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
-        index=True,
     )
 
     event_metadata: Mapped[dict | None] = mapped_column(
         "metadata",
-        JSON,
+        JSONB,
         nullable=True,
     )
 
@@ -147,4 +154,26 @@ class UserEvent(Base):
 
     product = relationship(
         "Product",
+        back_populates="events",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "event_id",
+            name="user_events_event_id_key",
+        ),
+        Index(
+            "ix_user_events_event_id",
+            "event_id",
+        ),
+        Index(
+            "ix_user_events_user_occurred_at",
+            "user_id",
+            "occurred_at",
+        ),
+        Index(
+            "ix_user_events_product_event_type",
+            "product_id",
+            "event_type",
+        ),
     )

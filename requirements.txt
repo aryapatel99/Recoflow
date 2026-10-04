@@ -11,3 +11,6 @@ python-jose[cryptography]
 email-validator
 httpx
 pytest
+numpy
+pandas
+streamlit

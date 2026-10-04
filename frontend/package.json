@@ -1,0 +1,29 @@
+{
+  "name": "recoflow-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001"
+  },
+  "dependencies": {
+    "@react-three/drei": "10.7.9",
+    "@react-three/fiber": "9.8.1",
+    "@tailwindcss/postcss": "^4.3.3",
+    "framer-motion": "14.0.0",
+    "lucide-react": "1.52.0",
+    "next": "15.5.0",
+    "postcss": "^8.5.28",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "tailwindcss": "^4.3.3",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.0.0",
+    "@types/react": "19.0.0",
+    "@types/react-dom": "19.0.0",
+    "typescript": "5.8.3"
+  }
+}

@@ -51,7 +51,4 @@ def get_current_user(
             },
         )
 
-    return AuthService.get_current_user(
-        db,
-        user_id,
-    )
+    return AuthService.get_current_user(db, token=credentials.credentials)

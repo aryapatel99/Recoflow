@@ -1,6 +1,4 @@
 from datetime import datetime, timedelta, timezone
-import hashlib
-import secrets
 
 import bcrypt
 from jose import JWTError, jwt
@@ -81,17 +79,3 @@ def decode_access_token(token: str) -> str | None:
 
     except JWTError:
         return None
-
-
-def generate_verification_token() -> str:
-    return secrets.token_urlsafe(32)
-
-
-def hash_verification_token(token: str) -> str:
-    return hashlib.sha256(
-        token.encode("utf-8")
-    ).hexdigest()
-
-
-def verification_token_expiry(hours: int = 24) -> datetime:
-    return datetime.now(timezone.utc) + timedelta(hours=hours)

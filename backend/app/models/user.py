@@ -1,6 +1,14 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
@@ -17,9 +25,7 @@ class User(Base):
 
     email: Mapped[str] = mapped_column(
         String(320),
-        unique=True,
         nullable=False,
-        index=True,
     )
 
     first_name: Mapped[str | None] = mapped_column(
@@ -63,17 +69,6 @@ class User(Base):
         onupdate=func.now(),
     )
 
-    email_verification_token_hash: Mapped[str | None] = mapped_column(
-        String(64),
-        nullable=True,
-        unique=True,
-    )
-
-    email_verification_expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-    )
-
     events = relationship(
         "UserEvent",
         back_populates="user",
@@ -103,4 +98,15 @@ class User(Base):
         "Recommendation",
         back_populates="user",
         cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "email",
+            name="users_email_key",
+        ),
+        Index(
+            "ix_users_email",
+            "email",
+        ),
     )

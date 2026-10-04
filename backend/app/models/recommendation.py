@@ -1,16 +1,16 @@
 from datetime import datetime
 from decimal import Decimal
-from uuid import UUID
 
 from sqlalchemy import (
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
+    UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
@@ -26,14 +26,14 @@ class Recommendation(Base):
 
     request_id: Mapped[str] = mapped_column(
         String(100),
-        unique=True,
         nullable=False,
-        index=True,
     )
 
-    user_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="CASCADE"),
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+        ),
         nullable=False,
         index=True,
     )
@@ -77,6 +77,17 @@ class Recommendation(Base):
         cascade="all, delete-orphan",
     )
 
+    __table_args__ = (
+        UniqueConstraint(
+            "request_id",
+            name="recommendations_request_id_key",
+        ),
+        Index(
+            "ix_recommendations_request_id",
+            "request_id",
+        ),
+    )
+
 
 class RecommendationItem(Base):
     __tablename__ = "recommendation_items"
@@ -87,13 +98,19 @@ class RecommendationItem(Base):
     )
 
     recommendation_id: Mapped[int] = mapped_column(
-        ForeignKey("recommendations.id", ondelete="CASCADE"),
+        ForeignKey(
+            "recommendations.id",
+            ondelete="CASCADE",
+        ),
         nullable=False,
         index=True,
     )
 
     product_id: Mapped[int] = mapped_column(
-        ForeignKey("products.id", ondelete="RESTRICT"),
+        ForeignKey(
+            "products.id",
+            ondelete="RESTRICT",
+        ),
         nullable=False,
         index=True,
     )
@@ -134,20 +151,28 @@ class RecommendationImpression(Base):
     )
 
     recommendation_id: Mapped[int] = mapped_column(
-        ForeignKey("recommendations.id", ondelete="CASCADE"),
+        ForeignKey(
+            "recommendations.id",
+            ondelete="CASCADE",
+        ),
         nullable=False,
         index=True,
     )
 
-    user_id: Mapped[UUID] = mapped_column(
-        PGUUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="CASCADE"),
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+        ),
         nullable=False,
         index=True,
     )
 
     product_id: Mapped[int] = mapped_column(
-        ForeignKey("products.id", ondelete="RESTRICT"),
+        ForeignKey(
+            "products.id",
+            ondelete="RESTRICT",
+        ),
         nullable=False,
         index=True,
     )

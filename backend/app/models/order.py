@@ -9,6 +9,7 @@ from sqlalchemy import (
     String,
     func,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.app.db.base import Base
@@ -37,6 +38,23 @@ class Order(Base):
     total_amount: Mapped[Decimal] = mapped_column(
         Numeric(12, 2),
         nullable=False,
+    )
+
+    delivery_address: Mapped[dict] = mapped_column(
+        JSONB,
+        nullable=False,
+    )
+
+    shipping_method: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+    )
+
+    idempotency_key: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+        unique=True,
+        index=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(

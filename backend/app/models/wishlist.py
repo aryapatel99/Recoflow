@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import (
     DateTime,
     ForeignKey,
+    Index,
     UniqueConstraint,
     func,
 )
@@ -20,10 +21,11 @@ class Wishlist(Base):
     )
 
     user_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"),
-        unique=True,
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+        ),
         nullable=False,
-        index=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -50,6 +52,17 @@ class Wishlist(Base):
         cascade="all, delete-orphan",
     )
 
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            name="wishlists_user_id_key",
+        ),
+        Index(
+            "ix_wishlists_user_id",
+            "user_id",
+        ),
+    )
+
 
 class WishlistItem(Base):
     __tablename__ = "wishlist_items"
@@ -60,13 +73,19 @@ class WishlistItem(Base):
     )
 
     wishlist_id: Mapped[int] = mapped_column(
-        ForeignKey("wishlists.id", ondelete="CASCADE"),
+        ForeignKey(
+            "wishlists.id",
+            ondelete="CASCADE",
+        ),
         nullable=False,
         index=True,
     )
 
     product_id: Mapped[int] = mapped_column(
-        ForeignKey("products.id", ondelete="RESTRICT"),
+        ForeignKey(
+            "products.id",
+            ondelete="RESTRICT",
+        ),
         nullable=False,
         index=True,
     )

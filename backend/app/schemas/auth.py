@@ -10,8 +10,7 @@ class RegisterRequest(BaseModel):
 class RegisterResponse(BaseModel):
     message: str
     email: EmailStr
-    email_verified: bool
-    verification_token: str
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -30,10 +29,4 @@ class UserResponse(BaseModel):
     email: EmailStr
     first_name: str | None
     last_name: str | None
-    is_email_verified: bool
     is_active: bool
-
-
-class VerifyEmailResponse(BaseModel):
-    message: str
-    email: EmailStr

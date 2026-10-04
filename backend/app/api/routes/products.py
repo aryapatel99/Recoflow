@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from backend.app.api.dependencies import get_db
+from backend.app.api.dependencies import get_current_user, get_db
 from backend.app.schemas.product import (
     CategoryCreate,
     CategoryResponse,
@@ -114,6 +114,7 @@ def list_categories(
 )
 def create_category(
     payload: CategoryCreate,
+    _current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     service = ProductService(db)
@@ -135,6 +136,7 @@ def create_category(
 )
 def create_product(
     payload: ProductCreate,
+    _current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     service = ProductService(db)
@@ -156,6 +158,7 @@ def create_product(
 def update_product(
     product_id: int,
     payload: ProductUpdate,
+    _current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     service = ProductService(db)
