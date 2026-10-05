@@ -267,3 +267,43 @@ class RecommendationService:
             "count": len(items),
             "items": items,
         }
+
+    @classmethod
+    def _rank(
+        cls,
+        db: Session,
+        user_id: int,
+        limit: int,
+        strategy: str,
+    ) -> dict:
+        products = cls._load_products(db)
+        events = cls._load_events(db)
+        user_events = [event for event in events if event["user_id"] == int(user_id)]
+        if strategy == "popular":
+            scores = build_popularity_scores(events, products)
+        elif strategy == "content-based":
+            scores = build_content_scores(user_events, products)
+        else:
+            raise ValueError(f"Unsupported recommendation strategy: {strategy}")
+        scores = filter_seen_products(scores, user_events)
+        ranked = rank_candidates(scores, limit=limit)
+        products_by_id = {product.product_id: product for product in products}
+        items = [
+            cls._to_response_item(products_by_id[candidate.product_id], candidate.score, strategy)
+            for candidate in ranked
+            if candidate.product_id in products_by_id
+        ]
+        return {
+            "user_id": int(user_id),
+            "strategy": strategy,
+            "count": len(items),
+            "items": items,
+        }
+
+    @classmethod
+    def popular(cls, db: Session, user_id: int, limit: int = 10) -> dict:
+        return cls._rank(db, user_id, limit, "popular")
+
+    @classmethod
+    def content_based(cls, db: Session, user_id: int, limit: int = 10) -> dict:
+        return cls._rank(db, user_id, limit, "content-based")

@@ -13,6 +13,9 @@ env/
 .env
 .env.*
 !.env.example
+deployment/.env
+deployment/aws/credentials
+deployment/aws/config
 
 # IDE
 .vscode/
@@ -25,6 +28,10 @@ Thumbs.db
 # Logs
 logs/
 *.log
+*.pem
+*.key
+credentials/
+secrets/
 
 # Python tools
 .pytest_cache/
@@ -66,6 +73,7 @@ dist/
 
 # Node
 node_modules/
+.next/
 
 # Streamlit
 .streamlit/secrets.toml

@@ -10,6 +10,8 @@ from backend.app.api.routes.behaviors import router as behaviors_router
 from backend.app.api.routes.recommendations import router as recommendations_router
 from backend.app.api.routes.evaluation import router as evaluation_router
 from backend.app.api.routes.orders import router as orders_router
+from backend.app.api.routes.cart import router as cart_router
+from backend.app.api.routes.wishlist import router as wishlist_router
 
 
 app = FastAPI(
@@ -44,3 +46,5 @@ app.include_router(behaviors_router)
 app.include_router(recommendations_router)
 app.include_router(evaluation_router)
 app.include_router(orders_router)
+app.include_router(cart_router)
+app.include_router(wishlist_router)

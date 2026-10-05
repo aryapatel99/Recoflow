@@ -143,11 +143,10 @@ def product_text(
         product.brand or "",
     ]
 
-    if product.features:
-        parts.extend(
-            str(value)
-            for value in product.features.values()
-        )
+    if isinstance(product.features, dict):
+        parts.extend(str(value) for value in product.features.values())
+    elif isinstance(product.features, list):
+        parts.extend(str(value) for value in product.features)
 
     return " ".join(parts)
 

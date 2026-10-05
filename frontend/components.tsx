@@ -22,16 +22,31 @@ import { Float, MeshDistortMaterial, Sphere } from "@react-three/drei";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-export const API = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
+if (process.env.NODE_ENV === "production" && !configuredApiUrl) {
+  throw new Error("NEXT_PUBLIC_API_URL must be configured for production builds.");
+}
+
+export const API = configuredApiUrl || "http://127.0.0.1:8000";
 const BROWSER_API_PREFIX = "/api/backend";
 
 export async function api(path: string, options: RequestInit = {}) {
   const token = typeof window !== "undefined" ? localStorage.getItem("recoflow_token") : null;
   const headers = new Headers(options.headers);
-  if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  let body = options.body;
+  if (body && path === "/api/v1/events" && typeof body === "string") {
+    const event = JSON.parse(body);
+    if (!event.event_id) {
+      event.event_id = typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `web-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+    body = JSON.stringify(event);
+  }
+  if (body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", "Bearer " + token);
 const baseUrl = typeof window === "undefined" ? API : BROWSER_API_PREFIX;
-const response = await fetch(`${baseUrl}${path}`, { ...options, headers, cache: "no-store" });
+const response = await fetch(`${baseUrl}${path}`, { ...options, body, headers, cache: "no-store" });
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
     try {
@@ -76,7 +91,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
       if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
     } catch {}
     const token = localStorage.getItem("recoflow_token");
-    if (token) api("/auth/me").then(setUser).catch(() => localStorage.removeItem("recoflow_token"));
+    if (token) {
+      api("/auth/me")
+        .then(async (authenticatedUser) => {
+          setUser(authenticatedUser);
+          const [serverCart, serverWishlist] = await Promise.all([
+            api("/api/v1/cart"),
+            api("/api/v1/wishlist"),
+          ]);
+          setCart((serverCart.items || []).map((item: any) => ({
+            ...item.product,
+            id: item.product_id,
+            quantity: item.quantity,
+          })));
+          setWishlist((serverWishlist.items || []).map((item: any) => item.product_id));
+        })
+        .catch(() => localStorage.removeItem("recoflow_token"));
+    }
     setHydrated(true);
     setAuthHydrated(true);
   }, []);
@@ -91,6 +122,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     const id = Number(product.id ?? product.product_id);
     setCart((current) => {
       const existing = current.find((item) => Number(item.id ?? item.product_id) === id);
+      const quantity = existing ? existing.quantity + 1 : 1;
+      if (user) {
+        api("/api/v1/cart/items", {
+          method: "POST",
+          body: JSON.stringify({ product_id: id, quantity }),
+        }).catch(() => showToast("Could not sync your bag."));
+      }
       if (existing) {
         return current.map((item) =>
           Number(item.id ?? item.product_id) === id ? { ...item, quantity: item.quantity + 1 } : item,
@@ -101,11 +139,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
 
   function removeFromCart(id: number) {
-    setCart((current) =>
-      current
+    setCart((current) => {
+      const existing = current.find((item) => Number(item.id ?? item.product_id) === id);
+      const quantity = existing ? existing.quantity - 1 : 0;
+      if (user) {
+        const request = quantity > 0
+          ? api("/api/v1/cart/items", { method: "POST", body: JSON.stringify({ product_id: id, quantity }) })
+          : api(`/api/v1/cart/items/${id}`, { method: "DELETE" });
+        request.catch(() => showToast("Could not sync your bag."));
+      }
+      return current
         .map((item) => Number(item.id ?? item.product_id) === id ? { ...item, quantity: item.quantity - 1 } : item)
-        .filter((item) => item.quantity > 0),
-    );
+        .filter((item) => item.quantity > 0);
+    });
   }
 
   function clearCart() {
@@ -113,8 +159,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
   }
 
   function toggleWishlist(id: number) {
-    setWishlist((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
-    setToast(wishlist.includes(id) ? "Removed from wishlist" : "Saved to wishlist");
+    const removing = wishlist.includes(id);
+    setWishlist((current) => removing ? current.filter((item) => item !== id) : [...current, id]);
+    if (user) {
+      const request = removing
+        ? api(`/api/v1/wishlist/items/${id}`, { method: "DELETE" })
+        : api("/api/v1/wishlist/items", { method: "POST", body: JSON.stringify({ product_id: id }) });
+      request.catch(() => showToast("Could not sync your wishlist."));
+    }
+    setToast(removing ? "Removed from wishlist" : "Saved to wishlist");
     window.setTimeout(() => setToast(null), 2200);
   }
 
@@ -278,11 +331,12 @@ export function Hero3D() {
 }
 
 export function ProductCard({ product, recommendation = false }: { product: any; recommendation?: boolean }) {
-  const { addToCart, wishlist, toggleWishlist, showToast } = useApp();
+  const { addToCart, wishlist, toggleWishlist, showToast, user } = useApp();
   const id = Number(product.id ?? product.product_id);
   const saved = wishlist.includes(id);
   const [imageFailed, setImageFailed] = useState(false);
   async function event(eventType: string) {
+    if (!user) return;
     try { await api("/api/v1/events", { method: "POST", body: JSON.stringify({ event_type: eventType, product_id: id, metadata: { source: "web_ui" } }) }); } catch {}
   }
   return (

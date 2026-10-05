@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,6 +22,23 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @model_validator(mode="after")
+    def validate_runtime_settings(self) -> "Settings":
+        if self.app_env.lower() in {"production", "staging"}:
+            if self.debug:
+                raise ValueError("DEBUG must be false in production-like environments.")
+            if len(self.jwt_secret_key) < 32 or self.jwt_secret_key.startswith("change-this"):
+                raise ValueError(
+                    "JWT_SECRET_KEY must be a strong, non-placeholder secret "
+                    "in production-like environments."
+                )
+            if any("localhost" in origin or "127.0.0.1" in origin for origin in self.cors_origin_list):
+                raise ValueError(
+                    "CORS_ORIGINS must not contain local development origins "
+                    "in production-like environments."
+                )
+        return self
 
     @property
     def cors_origin_list(self) -> list[str]:

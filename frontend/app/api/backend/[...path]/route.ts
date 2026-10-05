@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const configuredBackendUrl = process.env.NEXT_PUBLIC_API_URL;
+if (process.env.NODE_ENV === "production" && !configuredBackendUrl) {
+  throw new Error("NEXT_PUBLIC_API_URL must be configured for production builds.");
+}
+
+const BACKEND_URL = configuredBackendUrl || "http://127.0.0.1:8000";
 
 async function forward(
   request: NextRequest,

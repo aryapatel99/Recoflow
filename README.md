@@ -179,4 +179,6 @@ deployment step before switching traffic, configure health checks against
 See [docs/aws/aws-architecture.md](docs/aws/aws-architecture.md),
 [docs/architecture/system-architecture.md](docs/architecture/system-architecture.md),
 and [docs/database/database-schema.md](docs/database/database-schema.md) for
-the current architecture and deployment plan.
+the current architecture and deployment plan. The executable deployment
+templates, Dockerfiles, verification scripts, and AWS runbook are in
+[deployment/](deployment/).

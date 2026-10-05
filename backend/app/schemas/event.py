@@ -50,7 +50,7 @@ class EventCreate(BaseModel):
 
 
 class EventResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: int
     event_id: str
@@ -60,7 +60,10 @@ class EventResponse(BaseModel):
     product_id: int | None
     occurred_at: datetime
     received_at: datetime
-    metadata: dict[str, Any] | None
+    metadata: dict[str, Any] | None = Field(
+        default=None,
+        validation_alias="event_metadata",
+    )
 
 
 class BatchEventCreate(BaseModel):

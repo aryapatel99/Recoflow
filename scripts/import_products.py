@@ -23,6 +23,7 @@ from sqlalchemy import func, select
 
 from backend.app.db.database import SessionLocal
 from backend.app.models.product import Category, Product
+from backend.app.services.catalog_pricing import price_for_product
 
 
 DEFAULT_SOURCE = Path("data/raw/meta_Electronics.sample.jsonl")
@@ -219,7 +220,13 @@ def import_products(source: Path, target_new: int) -> None:
                 external_id=external_id,
                 title=item["title"],
                 description=item["description"],
-                price=item["price"],
+                price=item["price"]
+                if item["price"] is not None and item["price"] > 500
+                else price_for_product(
+                    title=item["title"],
+                    category=item["category"],
+                    external_id=external_id,
+                ),
                 brand=item["brand"],
                 category_id=categories[item["category"]].id,
                 features=item["features"],

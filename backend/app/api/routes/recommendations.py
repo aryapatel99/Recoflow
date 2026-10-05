@@ -17,6 +17,23 @@ router = APIRouter(
     tags=["Recommendations"],
 )
 
+@router.get("/popular", response_model=RecommendationResponse)
+def popular_recommendations(
+    limit: int = Query(default=10, ge=1, le=50),
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return RecommendationService.popular(db, int(current_user.id), limit)
+
+
+@router.get("/content-based", response_model=RecommendationResponse)
+def content_based_recommendations(
+    limit: int = Query(default=10, ge=1, le=50),
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return RecommendationService.content_based(db, int(current_user.id), limit)
+
 
 @router.get(
     "/collaborative",

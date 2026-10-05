@@ -125,21 +125,19 @@ export default function ProductPage() {
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1800);
 
-    api(
-      "/api/v1/events",
-      {
-        method: "POST",
-        body: JSON.stringify({
-          event_type:
-            "add_to_cart",
-          product_id: id,
-          metadata: {
-            source:
-              "product_page",
-          },
-        }),
-      }
-    ).catch(() => {});
+    if (user) {
+      api(
+        "/api/v1/events",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            event_type: "add_to_cart",
+            product_id: id,
+            metadata: { source: "product_page" },
+          }),
+        }
+      ).catch(() => {});
+    }
   }
 
   return (
