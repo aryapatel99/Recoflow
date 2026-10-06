@@ -22,7 +22,6 @@ SessionLocal = sessionmaker(
 
 def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
-
     try:
         yield db
     finally:
