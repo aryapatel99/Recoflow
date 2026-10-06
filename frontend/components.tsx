@@ -22,12 +22,10 @@ import { Float, MeshDistortMaterial, Sphere } from "@react-three/drei";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
-if (process.env.NODE_ENV === "production" && !configuredApiUrl) {
-  throw new Error("NEXT_PUBLIC_API_URL must be configured for production builds.");
-}
-
-export const API = configuredApiUrl || "http://127.0.0.1:8000";
+export const API =
+  process.env.NODE_ENV === "production"
+    ? "/api/backend"
+    : process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const BROWSER_API_PREFIX = "/api/backend";
 
 export async function api(path: string, options: RequestInit = {}) {
